@@ -27,7 +27,7 @@ class CityEnv(gym.Env):
             {
                 "driver_locations": spaces.Box(low=0, high=self.grid_size, shape=(self.num_drivers, 2), dtype=np.float32),
                 "driver_fatigues": spaces.Box(low=0, high=1, shape=(self.num_drivers,), dtype=np.float32),
-                "demand_density": spaces.Box(low=0, high=100, shape=(self.num_zones), dtype=np.float32),
+                "demand_density": spaces.Box(low=0, high=100, shape=(self.num_zones,), dtype=np.float32),
                 "time_of_day": spaces.Box(low=0, high=24, shape=(1,), dtype=np.float32)
             }
         )
@@ -82,33 +82,33 @@ class CityEnv(gym.Env):
             driver = self.drivers[selected_driver_idx]
             passenger = self.passengers[0] # the first passenger of queue
 
-        if driver.status == "IDLE":
-            trip_dist = np.linalg.norm(driver.loaction - passenger.location)
-            dest_zone_idx = int(passenger.destination_zone)
-            target_bonus = 0
-            if 0 <= dest_zone_idx < len(self.l1_target_zones):
-                # L1 target zone
-                target_bonux = self.l1_target_zones[dest_zone_idx]
-            
-            reward, details = calculate_composite_reward(
-               driver, passenger, trip_dist, l1_target_zone=dest_zone_idx
-            )
+            if driver.status == "IDLE":
+                trip_dist = np.linalg.norm(driver.location - passenger.location)
+                dest_zone_idx = int(passenger.destination_zone)
+                target_bonus = 0
+                if 0 <= dest_zone_idx < len(self.l1_target_zones):
+                    # L1 target zone
+                    target_bonus = self.l1_target_zones[dest_zone_idx]
 
-            # Driver status update (trip simulation)
-            driver.location = passenger.location
-            driver.hours_driven_today += 0.5
+                reward_value, details = calculate_composite_reward(
+                   driver, passenger, trip_dist, l1_target_zone=dest_zone_idx
+                )
 
-            total_step_reward = reward
-            
-            # Delete serviced passenger
-            self.passengers.pop(0)
+                # Driver status update (trip simulation)
+                driver.location = passenger.location
+                driver.hours_driven_today += 0.5
+
+                total_step_reward = float(reward_value)
+
+                # Delete serviced passenger
+                self.passengers.pop(0)
 
         # Update fatigue for all drivers
         for driver in self.drivers:
             if driver.status == "IDLE":
                 pass
             
-        return self._get_observation(), total_step_reward, False, info
+        return self._get_observation(), total_step_reward, done, False, info
     
     def _get_observation(self):
         """

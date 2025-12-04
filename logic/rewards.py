@@ -34,10 +34,10 @@ def calculate_composite_reward(driver, passenger, trip_distance, l1_target_zone)
         print(f"Strategic match! Drvier goes to target zone {l1_target_zone}.")
 
     r_total = (
-        (Config.W1_PROFIT * r_profit),
-        (Config.W2_WAIT_TIME * r_wait),
-        (Config.W3_DRIVER_UTIL * r_driver),
-        (Config.W4_COMPLIANCE * r_system),
+        (Config.W1_PROFIT * r_profit) +
+        (Config.W2_WAIT_TIME * r_wait) +
+        (Config.W3_DRIVER_UTIL * r_driver) +
+        (Config.W4_COMPLIANCE * r_system) 
     )
 
     return r_total, {
